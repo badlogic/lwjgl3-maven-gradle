@@ -94,7 +94,7 @@ public class SharedLibraryLoader {
 			} else if (SharedLibraryLoader.isLinux) {
 				nativesDir = loader.extractFile(SharedLibraryLoader.is64Bit ? "liblwjgl.so" : "liblwjgl32.so", null).getParentFile();
 				if (!disableOpenAL)
-					loader.extractFile(SharedLibraryLoader.is64Bit ? "libopenal.so" : "libopenal64.so", nativesDir.getName());
+					loader.extractFile(SharedLibraryLoader.is64Bit ? "libopenal.so" : "libopenal32.so", nativesDir.getName());
 			}
 		} catch (Throwable ex) {
 			throw new RuntimeException("Unable to extract LWJGL natives.", ex);
