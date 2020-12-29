@@ -1,19 +1,73 @@
-apply plugin: "java"
+plugins {
+    id 'application'
+}
 
-project.ext.lwjglVersion = "3.0.0a"
+wrapper {
+    gradleVersion = '6.7.1'
+    distributionType = Wrapper.DistributionType.ALL
+}
+
+group = 'lwjgl3-tests'
+version = '0.0.1-SNAPSHOT'
+
+ext {
+    lwjglVersion = '3.2.3'
+
+    //LWJGL modules for compile classpath
+
+    //level: getting started
+    //lwjglModules = ['lwjgl', 'lwjgl-assimp', 'lwjgl-bgfx', 'lwjgl-glfw', 'lwjgl-nanovg', 'lwjgl-nuklear',
+    //                'lwjgl-openal', 'lwjgl-opengl', 'lwjgl-par', 'lwjgl-stb', 'lwjgl-vulkan']
+
+    //level: minimal OpenGL
+    lwjglModules = ['lwjgl', 'lwjgl-assimp', 'lwjgl-glfw', 'lwjgl-openal', 'lwjgl-opengl', 'lwjgl-stb']
+
+    //level: minimal OpenGL ES
+    //lwjglModules = ['lwjgl', 'lwjgl-assimp', 'lwjgl-egl', 'lwjgl-glfw', 'lwjgl-openal', 'lwjgl-opengles', 'lwjgl-stb']
+
+    //level: minimal Vulkan
+    //lwjglModules = ['lwjgl', 'lwjgl-assimp', 'lwjgl-glfw', 'lwjgl-openal', 'lwjgl-stb', 'lwjgl-vulkan']
+
+    //LWJGL modules with native libraries for runtime classpath
+    lwjglNativeModules = lwjglModules - ['lwjgl-egl'] //lwjgl-egl has no native libraries
+
+    //classifiers for supported OS'es with native libraries
+    //osNativeClassifiers = ['natives-windows', 'natives-windows-x86', 'natives-macos',
+    //                       'natives-linux', 'natives-linux-arm64', 'natives-linux-arm32'] //all supported OS'es
+    osNativeClassifiers = ['natives-windows', 'natives-macos', 'natives-linux'] //64bit OS'es on Intel platform
+}
 
 repositories {
     mavenCentral()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
+    mavenLocal()
 }
 
 dependencies {
-	compile "org.lwjgl:lwjgl:${lwjglVersion}"
-	compile "org.lwjgl:lwjgl-platform:${lwjglVersion}:natives-windows"
-	compile "org.lwjgl:lwjgl-platform:${lwjglVersion}:natives-linux"
-	compile "org.lwjgl:lwjgl-platform:${lwjglVersion}:natives-osx"
+    //get recommended dependency versions from the LWJGL BOM
+	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+
+    //add LWJGL modules to the compile classpath
+    lwjglModules.each {
+        implementation "org.lwjgl:$it"
+    }
+
+    //add LWJGL native libraries of all supported OS'es to the runtime classpath
+    lwjglNativeModules.each { lwjglModule ->
+        osNativeClassifiers.each { osNativeClassifier ->
+            if ('lwjgl-vulkan' == lwjglModule) {
+                //Vulkan module is only implemented with MacOsX natives
+                if ('natives-macos' == osNativeClassifier) {
+                    runtimeOnly "org.lwjgl:$lwjglModule::$osNativeClassifier"
+                }
+            } else {
+                runtimeOnly "org.lwjgl:$lwjglModule::$osNativeClassifier"
+            }
+        }
+    }
 }
+
+application {
+    mainClass = 'Lwjgl3Test'
+}
+
